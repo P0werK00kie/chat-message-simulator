@@ -29,6 +29,10 @@ export const SettingsPanel = () => {
   const layoutId = useConversationStore((state) => state.layoutId)
   const themeId = useConversationStore((state) => state.themeId)
   const setTheme = useConversationStore((state) => state.setTheme)
+  const viewMode = useConversationStore((state) => state.viewMode)
+  const setViewMode = useConversationStore((state) => state.setViewMode)
+  const browserUrl = useConversationStore((state) => state.browserUrl)
+  const setBrowserUrl = useConversationStore((state) => state.setBrowserUrl)
   const showChrome = useConversationStore((state) => state.ui.showChrome)
   const setUi = useConversationStore((state) => state.setUi)
   const backgroundImageUrl = useConversationStore((state) => state.backgroundImageUrl)
@@ -67,6 +71,30 @@ export const SettingsPanel = () => {
 
       <Section title="App">
         <LayoutPicker />
+      </Section>
+
+      <Section title="Window" hint="Wrap the chat in a browser frame, like a chat web-app viewed in Safari.">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sm text-neutral-600">Frame</span>
+          <Segmented
+            label="Window frame"
+            size="sm"
+            value={viewMode}
+            onChange={setViewMode}
+            options={[
+              { value: "app", label: "App" },
+              { value: "browser", label: "Safari" },
+            ]}
+          />
+        </div>
+        {viewMode === "browser" ? (
+          <Input
+            value={browserUrl}
+            onChange={(event) => setBrowserUrl(event.target.value)}
+            placeholder="example.com"
+            aria-label="Browser address bar URL"
+          />
+        ) : null}
       </Section>
 
       <Section title="Appearance">

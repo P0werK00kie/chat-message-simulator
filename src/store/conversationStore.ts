@@ -9,6 +9,7 @@ import { toast } from "./toastStore"
 
 export type ExportFormat = "png" | "jpeg"
 export type ExportCaptureMode = "viewport" | "full" | "screens"
+export type ViewMode = "app" | "browser"
 
 export interface ExportSettings {
   presetId: string
@@ -32,6 +33,8 @@ type Snapshot = {
   conversation: Conversation
   layoutId: LayoutId
   themeId: ThemeId
+  viewMode: ViewMode
+  browserUrl: string
   activeParticipantId: string
   backgroundImageUrl: string
   backgroundImageOpacity: number
@@ -48,6 +51,8 @@ interface ConversationStore {
   conversation: Conversation
   layoutId: LayoutId
   themeId: ThemeId
+  viewMode: ViewMode
+  browserUrl: string
   activeParticipantId: string
   backgroundImageUrl: string
   backgroundImageOpacity: number
@@ -57,6 +62,8 @@ interface ConversationStore {
   history: HistoryState
   setLayout: (layoutId: LayoutId) => void
   setTheme: (themeId: ThemeId) => void
+  setViewMode: (viewMode: ViewMode) => void
+  setBrowserUrl: (url: string) => void
   setActiveParticipant: (participantId: string) => void
   setBackgroundImageUrl: (url: string) => void
   setBackgroundImageOpacity: (opacity: number) => void
@@ -265,6 +272,8 @@ const buildSnapshot = (state: ConversationStore): Snapshot => ({
   conversation: state.conversation,
   layoutId: state.layoutId,
   themeId: state.themeId,
+  viewMode: state.viewMode,
+  browserUrl: state.browserUrl,
   activeParticipantId: state.activeParticipantId,
   backgroundImageUrl: state.backgroundImageUrl,
   backgroundImageOpacity: state.backgroundImageOpacity,
@@ -332,6 +341,8 @@ export const useConversationStore = create<ConversationStore>()(
       conversation: buildDefaultConversation(),
       layoutId: defaultLayoutId,
       themeId: "light",
+      viewMode: "app",
+      browserUrl: "",
       activeParticipantId: defaultParticipants[0].id,
       backgroundImageUrl: "",
       backgroundImageOpacity: 0.35,
@@ -348,6 +359,9 @@ export const useConversationStore = create<ConversationStore>()(
           return { layoutId, themeId, history: pushHistory(state) }
         }),
       setTheme: (themeId) => set((state) => ({ themeId, history: pushHistory(state) })),
+      setViewMode: (viewMode) => set((state) => ({ viewMode, history: pushHistory(state) })),
+      setBrowserUrl: (url) =>
+        set((state) => ({ browserUrl: url, history: pushHistory(state, "browser-url") })),
       setActiveParticipant: (participantId) =>
         set((state) => ({ activeParticipantId: participantId, history: pushHistory(state) })),
       setBackgroundImageUrl: (url) =>
@@ -468,6 +482,8 @@ export const useConversationStore = create<ConversationStore>()(
           activeParticipantId: defaultParticipants[0].id,
           layoutId: defaultLayoutId,
           themeId: "light",
+          viewMode: "app",
+          browserUrl: "",
           backgroundImageUrl: "",
           backgroundImageOpacity: 0.35,
           backgroundColor: "",
@@ -538,6 +554,8 @@ export const useConversationStore = create<ConversationStore>()(
         conversation: state.conversation,
         layoutId: state.layoutId,
         themeId: state.themeId,
+        viewMode: state.viewMode,
+        browserUrl: state.browserUrl,
         activeParticipantId: state.activeParticipantId,
         backgroundImageUrl: state.backgroundImageUrl,
         backgroundImageOpacity: state.backgroundImageOpacity,

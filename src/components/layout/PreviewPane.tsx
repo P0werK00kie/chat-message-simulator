@@ -17,6 +17,7 @@ import { useConversationStore } from "@/store/conversationStore"
 import type { ExportCaptureMode } from "@/store/conversationStore"
 import { ChatLayout } from "@/components/layout/ChatLayout"
 import { LayoutSelector } from "@/components/layout/LayoutSelector"
+import { SafariChrome } from "@/components/browser/SafariChrome"
 import { Button } from "@/components/ui/button"
 import { Segmented } from "@/components/ui/segmented"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -33,6 +34,8 @@ export const PreviewPane = ({ preview, className }: PreviewPaneProps) => {
   const conversation = useConversationStore((state) => state.conversation)
   const layoutId = useConversationStore((state) => state.layoutId)
   const themeId = useConversationStore((state) => state.themeId)
+  const viewMode = useConversationStore((state) => state.viewMode)
+  const browserUrl = useConversationStore((state) => state.browserUrl)
   const activeParticipantId = useConversationStore((state) => state.activeParticipantId)
   const backgroundImageUrl = useConversationStore((state) => state.backgroundImageUrl)
   const backgroundImageOpacity = useConversationStore((state) => state.backgroundImageOpacity)
@@ -67,6 +70,7 @@ export const PreviewPane = ({ preview, className }: PreviewPaneProps) => {
     backgroundColor,
   }
   const setZoom = (zoom: number) => setUi({ zoom: clamp(zoom, 0.25, 2) })
+  const browserVariant = exportSettings.width >= 900 ? "desktop" : "mobile"
 
   return (
     <section className={cn("relative flex min-h-0 min-w-0 flex-1 flex-col", className)}>
@@ -164,12 +168,23 @@ export const PreviewPane = ({ preview, className }: PreviewPaneProps) => {
                 ref={exportRef}
                 style={{ width: exportSettings.width, height: exportSettings.height }}
               >
-                <ChatLayout
-                  {...sharedLayoutProps}
-                  conversationMode="scroll"
-                  conversationContainerRef={conversationRef}
-                  conversationContentRef={conversationContentRef}
-                />
+                {viewMode === "browser" ? (
+                  <SafariChrome url={browserUrl} variant={browserVariant} themeId={themeId}>
+                    <ChatLayout
+                      {...sharedLayoutProps}
+                      conversationMode="scroll"
+                      conversationContainerRef={conversationRef}
+                      conversationContentRef={conversationContentRef}
+                    />
+                  </SafariChrome>
+                ) : (
+                  <ChatLayout
+                    {...sharedLayoutProps}
+                    conversationMode="scroll"
+                    conversationContainerRef={conversationRef}
+                    conversationContentRef={conversationContentRef}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -207,7 +222,13 @@ export const PreviewPane = ({ preview, className }: PreviewPaneProps) => {
               ref={fullExportRef}
               style={{ width: exportSettings.width, height: resolvedHeight }}
             >
-              <ChatLayout {...sharedLayoutProps} conversationMode="expanded" />
+              {viewMode === "browser" ? (
+                <SafariChrome url={browserUrl} variant={browserVariant} themeId={themeId}>
+                  <ChatLayout {...sharedLayoutProps} conversationMode="expanded" />
+                </SafariChrome>
+              ) : (
+                <ChatLayout {...sharedLayoutProps} conversationMode="expanded" />
+              )}
             </div>
           </div>
         ) : null}
