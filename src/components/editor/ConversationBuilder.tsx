@@ -89,6 +89,13 @@ const BubblePreview = ({
       </div>
     )
   }
+  if (message.type === "receipt") {
+    return (
+      <div className={cn("px-1 text-xs text-neutral-400 italic", className)}>
+        <span className="line-clamp-1">{message.content || "Delivered"}</span>
+      </div>
+    )
+  }
   return (
     <div
       className={cn(
@@ -137,6 +144,9 @@ const MessageRow = ({
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id: message.id })
   const isSystem = message.type === "system"
+  const isReceipt = message.type === "receipt"
+  const isCentered = isSystem
+  const hideMeta = isSystem || isReceipt
 
   return (
     <div
@@ -161,11 +171,11 @@ const MessageRow = ({
       <div
         className={cn(
           "flex min-w-0 flex-1 flex-col",
-          isSystem ? "items-center" : isOwn ? "items-end" : "items-start",
+          isCentered ? "items-center" : isOwn ? "items-end" : "items-start",
           message.isHidden && "opacity-40",
         )}
       >
-        {showName && !isSystem ? (
+        {showName && !isSystem && !isReceipt ? (
           <span
             className="mb-0.5 px-1 text-[11px] font-semibold"
             style={{ color: sender?.color ?? "#64748b" }}
@@ -178,7 +188,7 @@ const MessageRow = ({
           onClick={onEdit}
           className={cn(
             "flex w-full cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-black/50 focus-visible:outline-none",
-            isSystem ? "justify-center" : isOwn ? "justify-end" : "justify-start",
+            isCentered ? "justify-center" : isOwn ? "justify-end" : "justify-start",
           )}
           aria-label={`Edit message${message.content ? `: ${message.content.slice(0, 60)}` : ""}`}
         >
@@ -187,7 +197,7 @@ const MessageRow = ({
         <span className="mt-0.5 flex items-center gap-1 px-1 text-[10px] text-neutral-400 tabular-nums">
           {message.isHidden ? <EyeOff className="h-3 w-3" /> : null}
           {formatTimestamp(message.timestamp)}
-          {isOwn && !isSystem ? ` · ${message.status}` : ""}
+          {isOwn && !hideMeta ? ` · ${message.status}` : ""}
           {message.isHidden ? " · hidden" : ""}
         </span>
       </div>
@@ -495,7 +505,8 @@ export const ConversationBuilder = () => {
                             showName={
                               !previous ||
                               previous.senderId !== message.senderId ||
-                              previous.type === "system"
+                              previous.type === "system" ||
+                              previous.type === "receipt"
                             }
                             isEditing={isEditing}
                             onEdit={() => setEditingId(isEditing ? null : message.id)}

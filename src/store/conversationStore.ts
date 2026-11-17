@@ -27,6 +27,7 @@ export interface UiState {
   zoom: number
   activePanel: "messages" | "participants" | "settings" | "export"
   autoFit: boolean
+  viewingProfileId: string | null
 }
 
 type Snapshot = {
@@ -40,6 +41,7 @@ type Snapshot = {
   backgroundImageOpacity: number
   backgroundColor: string
   exportSettings: ExportSettings
+  mapboxToken: string
 }
 
 interface HistoryState {
@@ -58,6 +60,7 @@ interface ConversationStore {
   backgroundImageOpacity: number
   backgroundColor: string
   exportSettings: ExportSettings
+  mapboxToken: string
   ui: UiState
   history: HistoryState
   setLayout: (layoutId: LayoutId) => void
@@ -86,6 +89,7 @@ interface ConversationStore {
   duplicateMessage: (messageId: string) => void
   setMessages: (messages: Message[]) => void
   setExportSettings: (settings: Partial<ExportSettings>) => void
+  setMapboxToken: (token: string) => void
   setUi: (updates: Partial<UiState>) => void
   resetConversation: () => void
   loadConversation: (conversation: Conversation) => void
@@ -262,6 +266,7 @@ const defaultUiState: UiState = {
   zoom: 1,
   activePanel: "messages",
   autoFit: true,
+  viewingProfileId: null,
 }
 
 const STORAGE_KEY = "chat-sim-storage"
@@ -279,6 +284,7 @@ const buildSnapshot = (state: ConversationStore): Snapshot => ({
   backgroundImageOpacity: state.backgroundImageOpacity,
   backgroundColor: state.backgroundColor,
   exportSettings: state.exportSettings,
+  mapboxToken: state.mapboxToken,
 })
 
 let lastHistoryKey: string | null = null
@@ -348,6 +354,7 @@ export const useConversationStore = create<ConversationStore>()(
       backgroundImageOpacity: 0.35,
       backgroundColor: "",
       exportSettings: defaultExportSettings,
+      mapboxToken: "",
       ui: defaultUiState,
       history: { past: [], future: [] },
       setLayout: (layoutId) =>
@@ -419,6 +426,10 @@ export const useConversationStore = create<ConversationStore>()(
               ),
               groupName: resolveGroupName(participants, state.conversation.groupName),
             }),
+            ui:
+              state.ui.viewingProfileId === participantId
+                ? { ...state.ui, viewingProfileId: null }
+                : state.ui,
             history: pushHistory(state),
           }
         }),
@@ -475,6 +486,8 @@ export const useConversationStore = create<ConversationStore>()(
           exportSettings: { ...state.exportSettings, ...settings },
           history: pushHistory(state, `export:${Object.keys(settings).join()}`),
         })),
+      setMapboxToken: (token) =>
+        set((state) => ({ mapboxToken: token, history: pushHistory(state, "mapbox-token") })),
       setUi: (updates) => set((state) => ({ ui: { ...state.ui, ...updates } })),
       resetConversation: () =>
         set((state) => ({
@@ -501,6 +514,7 @@ export const useConversationStore = create<ConversationStore>()(
             groupName: resolveGroupName(participants, conversation.groupName ?? legacyTitle),
           },
           activeParticipantId: participants[0]?.id ?? "",
+          ui: { ...state.ui, viewingProfileId: null },
           history: pushHistory(state),
         }))
       },
@@ -561,6 +575,7 @@ export const useConversationStore = create<ConversationStore>()(
         backgroundImageOpacity: state.backgroundImageOpacity,
         backgroundColor: state.backgroundColor,
         exportSettings: state.exportSettings,
+        mapboxToken: state.mapboxToken,
       }),
     },
   ),

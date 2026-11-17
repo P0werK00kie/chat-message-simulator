@@ -37,7 +37,7 @@ export const MessageComposer = ({ onSent }: { onSent?: () => void }) => {
   const [imageUrl, setImageUrl] = useState("")
   const [isReadingImage, setIsReadingImage] = useState(false)
   const [isOptionsOpen, setIsOptionsOpen] = useState(false)
-  const [type, setType] = useState<"text" | "system">("text")
+  const [type, setType] = useState<"text" | "system" | "receipt">("text")
   const [status, setStatus] = useState<MessageStatus>("read")
   const [timestamp, setTimestamp] = useState("")
 
@@ -45,7 +45,8 @@ export const MessageComposer = ({ onSent }: { onSent?: () => void }) => {
     ? preferredSenderId
     : selfId
   const sender = participants.find((participant) => participant.id === senderId)
-  const canSend = Boolean(senderId) && Boolean(content.trim() || imageUrl) && !isReadingImage
+  const canSend =
+    Boolean(senderId) && (type === "receipt" || Boolean(content.trim() || imageUrl)) && !isReadingImage
 
   const attachImage = async (file: File) => {
     setIsReadingImage(true)
@@ -68,7 +69,7 @@ export const MessageComposer = ({ onSent }: { onSent?: () => void }) => {
     if (!canSend) return
     addMessage({
       senderId,
-      content: content.trim(),
+      content: type === "receipt" ? content.trim() || "Delivered" : content.trim(),
       imageUrl: imageUrl || undefined,
       type: imageUrl ? "image" : type,
       status,
@@ -238,9 +239,11 @@ export const MessageComposer = ({ onSent }: { onSent?: () => void }) => {
             void attachImage(image)
           }}
           placeholder={
-            type === "system" && !imageUrl
-              ? "System notice, e.g. “Avery joined the chat”"
-              : `Message as ${sender?.name || "Unnamed"}…`
+            type === "receipt" && !imageUrl
+              ? "Receipt label, e.g. “Delivered” or “Opened”"
+              : type === "system" && !imageUrl
+                ? "System notice, e.g. “Avery joined the chat”"
+                : `Message as ${sender?.name || "Unnamed"}…`
           }
           aria-label="Message text"
           className="max-h-36 min-h-8 flex-1 resize-none bg-transparent px-1 py-1.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400"
@@ -279,21 +282,64 @@ export const MessageComposer = ({ onSent }: { onSent?: () => void }) => {
               options={[
                 { value: "text", label: imageUrl ? "Image" : "Message" },
                 { value: "system", label: "Notice" },
+                { value: "receipt", label: "Receipt" },
               ]}
             />
           </div>
+          {type === "receipt" && !imageUrl ? (
+            <div className="w-full space-y-1">
+              <span className="block text-[11px] font-medium text-neutral-500">Quick label</span>
+              <div className="flex flex-wrap gap-1.5">
+                {(
+                  [
+                    { label: "Opened", content: "Opened\nHold to replay", status: "sent" },
+                    { label: "Opened (no replay)", content: "Opened", status: "sent" },
+                    { label: "Delivered", content: "Delivered", status: "delivered" },
+                    { label: "Hold to replay or save", content: "Hold to replay or save", status: "read" },
+                  ] as const
+                ).map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => {
+                      setContent(preset.content)
+                      setStatus(preset.status)
+                    }}
+                    className={cn(
+                      "h-7 rounded-md border px-2.5 text-xs font-medium transition-colors",
+                      content === preset.content
+                        ? "border-black bg-black text-white"
+                        : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-black",
+                    )}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <div className="space-y-1">
-            <span className="block text-[11px] font-medium text-neutral-500">Status</span>
+            <span className="block text-[11px] font-medium text-neutral-500">
+              {type === "receipt" ? "Icon" : "Status"}
+            </span>
             <Segmented<MessageStatus>
               label="Delivery status"
               size="sm"
               value={status}
               onChange={setStatus}
-              options={[
-                { value: "sent", label: "Sent" },
-                { value: "delivered", label: "Delivered" },
-                { value: "read", label: "Read" },
-              ]}
+              options={
+                type === "receipt"
+                  ? [
+                      { value: "delivered", label: "Unopened" },
+                      { value: "sent", label: "Opened" },
+                      { value: "read", label: "Opened + media" },
+                    ]
+                  : [
+                      { value: "sent", label: "Sent" },
+                      { value: "delivered", label: "Delivered" },
+                      { value: "read", label: "Read" },
+                    ]
+              }
             />
           </div>
           <label className="block w-full space-y-1">

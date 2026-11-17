@@ -40,6 +40,7 @@ export const PreviewPane = ({ preview, className }: PreviewPaneProps) => {
   const backgroundImageUrl = useConversationStore((state) => state.backgroundImageUrl)
   const backgroundImageOpacity = useConversationStore((state) => state.backgroundImageOpacity)
   const backgroundColor = useConversationStore((state) => state.backgroundColor)
+  const mapboxToken = useConversationStore((state) => state.mapboxToken)
   const ui = useConversationStore((state) => state.ui)
   const setUi = useConversationStore((state) => state.setUi)
   const setTheme = useConversationStore((state) => state.setTheme)
@@ -68,6 +69,10 @@ export const PreviewPane = ({ preview, className }: PreviewPaneProps) => {
     backgroundImageUrl,
     backgroundImageOpacity,
     backgroundColor,
+    viewingProfileId: ui.viewingProfileId,
+    onOpenProfile: (participantId: string) => setUi({ viewingProfileId: participantId }),
+    onCloseProfile: () => setUi({ viewingProfileId: null }),
+    mapboxToken,
   }
   const setZoom = (zoom: number) => setUi({ zoom: clamp(zoom, 0.25, 2) })
   const browserVariant = exportSettings.width >= 900 ? "desktop" : "mobile"
@@ -190,7 +195,7 @@ export const PreviewPane = ({ preview, className }: PreviewPaneProps) => {
           </div>
         </div>
 
-        {metrics.hasOverflow ? (
+        {metrics.hasOverflow && !ui.viewingProfileId ? (
           <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-md bg-black/90 py-1 pr-1 pl-3 text-xs text-white">
             <span className="mr-1 whitespace-nowrap text-white/80">
               {visibleMessageCount} messages · scroll inside the phone

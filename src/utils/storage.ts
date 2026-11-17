@@ -1,4 +1,4 @@
-import type { Conversation, Participant, ParticipantStatus } from "../types/conversation"
+import type { Conversation, Participant, ParticipantLocation, ParticipantStatus } from "../types/conversation"
 import type { Message, MessageStatus, MessageType } from "../types/message"
 
 export const downloadJson = (data: Conversation, filename: string) => {
@@ -15,7 +15,7 @@ export const downloadJson = (data: Conversation, filename: string) => {
 }
 
 const participantStatuses: ParticipantStatus[] = ["online", "offline", "typing", "empty"]
-const messageTypes: MessageType[] = ["text", "system", "image"]
+const messageTypes: MessageType[] = ["text", "system", "image", "receipt"]
 const messageStatuses: MessageStatus[] = ["sent", "delivered", "read"]
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -31,6 +31,24 @@ const safeImageUrl = (value: unknown) =>
 const validTimestamp = (value: unknown) =>
   typeof value === "string" && !Number.isNaN(Date.parse(value)) ? value : undefined
 
+const safeLocation = (value: unknown): ParticipantLocation | undefined => {
+  if (!isRecord(value)) return undefined
+  const { address, lat, lng } = value
+  if (
+    typeof address === "string" &&
+    address.trim() &&
+    typeof lat === "number" &&
+    typeof lng === "number" &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    Math.abs(lat) <= 90 &&
+    Math.abs(lng) <= 180
+  ) {
+    return { address, lat, lng }
+  }
+  return undefined
+}
+
 // Imported JSON is untrusted: keep well-formed entries only and fill in defaults.
 export const parseConversation = (data: unknown): Conversation => {
   if (!isRecord(data) || !Array.isArray(data.participants) || !Array.isArray(data.messages)) {
@@ -42,10 +60,13 @@ export const parseConversation = (data: unknown): Conversation => {
     .map((entry) => ({
       id: entry.id as string,
       name: entry.name as string,
+      username: typeof entry.username === "string" ? entry.username.replace(/^@+/, "") : undefined,
       avatarUrl: safeImageUrl(entry.avatarUrl),
       isVerified: entry.isVerified === true,
       status: pick(entry.status, participantStatuses, "online"),
       color: typeof entry.color === "string" ? entry.color : "#22c55e",
+      lastActive: typeof entry.lastActive === "string" ? entry.lastActive : undefined,
+      location: safeLocation(entry.location),
     }))
   if (participants.length === 0) {
     throw new Error("The file has no participants.")

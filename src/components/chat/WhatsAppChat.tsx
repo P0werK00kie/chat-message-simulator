@@ -47,9 +47,17 @@ interface WhatsAppHeaderProps {
   avatarUrl?: string
   isVerified?: boolean
   isGroup?: boolean
+  onTitleClick?: () => void
 }
 
-export const WhatsAppHeader = ({ title, subtitle, avatarUrl, isVerified, isGroup }: WhatsAppHeaderProps) => (
+export const WhatsAppHeader = ({
+  title,
+  subtitle,
+  avatarUrl,
+  isVerified,
+  isGroup,
+  onTitleClick,
+}: WhatsAppHeaderProps) => (
   <div
     className="flex items-center gap-2 px-4 pt-2 pb-6"
     style={{ backgroundImage: fade("bottom"), color: "var(--chat-header-text)" }}
@@ -57,17 +65,37 @@ export const WhatsAppHeader = ({ title, subtitle, avatarUrl, isVerified, isGroup
     <span className={cn(glassClass, "flex h-10 w-10 shrink-0 items-center justify-center rounded-full")}>
       <ChevronLeft className="h-6 w-6" strokeWidth={2.2} />
     </span>
-    {avatarUrl ? (
-      <AvatarImage src={avatarUrl} alt={title} className="h-9 w-9" />
-    ) : (
-      <DefaultAvatar group={isGroup} className="h-9 w-9" />
-    )}
-    <div className="min-w-0 flex-1 leading-tight">
-      <div className="flex items-center gap-1 text-[16px] font-semibold">
-        <span className="truncate">{title}</span>
-        {isVerified ? <VerifiedBadge className="h-4 w-4 shrink-0" /> : null}
+    <div
+      className={cn(
+        "flex min-w-0 flex-1 items-center gap-2",
+        onTitleClick && "cursor-pointer rounded-md focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none",
+      )}
+      role={onTitleClick ? "button" : undefined}
+      tabIndex={onTitleClick ? 0 : undefined}
+      onClick={onTitleClick}
+      onKeyDown={
+        onTitleClick
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault()
+                onTitleClick()
+              }
+            }
+          : undefined
+      }
+    >
+      {avatarUrl ? (
+        <AvatarImage src={avatarUrl} alt={title} className="h-9 w-9" />
+      ) : (
+        <DefaultAvatar group={isGroup} className="h-9 w-9" />
+      )}
+      <div className="min-w-0 flex-1 leading-tight">
+        <div className="flex items-center gap-1 text-[16px] font-semibold">
+          <span className="truncate">{title}</span>
+          {isVerified ? <VerifiedBadge className="h-4 w-4 shrink-0" /> : null}
+        </div>
+        {subtitle ? <div className="truncate text-[12px] text-[var(--chat-muted)]">{subtitle}</div> : null}
       </div>
-      {subtitle ? <div className="truncate text-[12px] text-[var(--chat-muted)]">{subtitle}</div> : null}
     </div>
     <span className={cn(glassClass, "flex h-10 shrink-0 items-center gap-5 rounded-full px-4")}>
       <Video className="h-[22px] w-[22px]" strokeWidth={1.6} />

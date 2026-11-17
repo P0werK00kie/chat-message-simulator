@@ -42,6 +42,8 @@ export const SettingsPanel = () => {
   const clearBackgroundImage = useConversationStore((state) => state.clearBackgroundImage)
   const backgroundColor = useConversationStore((state) => state.backgroundColor)
   const setBackgroundColor = useConversationStore((state) => state.setBackgroundColor)
+  const mapboxToken = useConversationStore((state) => state.mapboxToken)
+  const setMapboxToken = useConversationStore((state) => state.setMapboxToken)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const layout = getLayoutConfig(layoutId)
@@ -215,6 +217,22 @@ export const SettingsPanel = () => {
             Reset
           </Button>
         </div>
+      </Section>
+
+      <Section
+        title="Map"
+        hint="Add your own Mapbox access token to show a profile's location on a small map."
+      >
+        <Input
+          value={mapboxToken}
+          onChange={(event) => setMapboxToken(event.target.value.trim())}
+          placeholder="pk.eyJ1Ijoi… (your Mapbox access token)"
+          className="font-mono text-xs"
+          aria-label="Mapbox access token"
+        />
+        <p className="text-[11px] text-neutral-400">
+          Stored only in this browser, never included in exported images or conversation files.
+        </p>
       </Section>
     </div>
   )

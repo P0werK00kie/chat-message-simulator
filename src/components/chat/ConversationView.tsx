@@ -2,6 +2,7 @@ import type { Message } from "@/types/message"
 import type { Participant } from "@/types/conversation"
 import type { LayoutConfig } from "@/types/layout"
 import { MessageBubble } from "@/components/chat/MessageBubble"
+import { SnapchatReceipt } from "@/components/chat/SnapchatReceipt"
 import { formatChatDay, formatDateSeparator, formatInstagramDateSeparator } from "@/utils/helpers"
 import { cn } from "@/utils/cn"
 
@@ -109,11 +110,15 @@ export const ConversationView = ({
           const isOwn = message.senderId === selfId
           const nextMessage = visibleMessages[index + 1]
           const isFirstFromSender =
-            showDate || previousMessage.senderId !== message.senderId || previousMessage.type === "system"
+            showDate ||
+            previousMessage.senderId !== message.senderId ||
+            previousMessage.type === "system" ||
+            previousMessage.type === "receipt"
           const isLastFromSender =
             !nextMessage ||
             nextMessage.senderId !== message.senderId ||
             nextMessage.type === "system" ||
+            nextMessage.type === "receipt" ||
             formatDateSeparator(nextMessage.timestamp) !== currentDateKey
           const showAvatar = (isInstagram || isMessenger) && !isOwn && isLastFromSender
 
@@ -122,6 +127,23 @@ export const ConversationView = ({
               <div key={message.id} className="space-y-3">
                 {showDate ? <div className={dateBadgeClass}>{currentDate}</div> : null}
                 <div className={systemMessageClass}>{message.content}</div>
+              </div>
+            )
+          }
+
+          if (message.type === "receipt") {
+            return (
+              <div key={message.id} className={isWhatsApp ? "pt-0.5" : "space-y-1"}>
+                {showDate ? <div className={dateBadgeClass}>{currentDate}</div> : null}
+                {isSnapchat ? (
+                  <SnapchatReceipt message={message} isOwn={isOwn} />
+                ) : (
+                  <div className={cn("flex w-full px-1", isOwn ? "justify-end" : "justify-start")}>
+                    <span className="text-[11px] text-[var(--chat-muted)] italic">
+                      {message.content || "Delivered"}
+                    </span>
+                  </div>
+                )}
               </div>
             )
           }

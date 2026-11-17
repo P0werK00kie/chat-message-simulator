@@ -1,4 +1,4 @@
-export type MessageType = "text" | "system" | "image"
+export type MessageType = "text" | "system" | "image" | "receipt"
 export type MessageStatus = "sent" | "delivered" | "read"
 
 export interface Message {

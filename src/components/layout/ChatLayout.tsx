@@ -3,6 +3,7 @@ import type { LayoutConfig, LayoutId, LayoutTheme } from "@/types/layout"
 import { ChatHeader } from "@/components/chat/ChatHeader"
 import { ConversationView } from "@/components/chat/ConversationView"
 import { MessageInput } from "@/components/chat/MessageInput"
+import { ProfileScreen } from "@/components/chat/ProfileScreen"
 import { cn } from "@/utils/cn"
 import { getConversationTitle, getSelfParticipantId } from "@/utils/helpers"
 
@@ -18,6 +19,10 @@ interface ChatLayoutProps {
   conversationMode?: "scroll" | "expanded"
   conversationContainerRef?: React.Ref<HTMLDivElement>
   conversationContentRef?: React.Ref<HTMLDivElement>
+  viewingProfileId?: string | null
+  onOpenProfile?: (participantId: string) => void
+  onCloseProfile?: () => void
+  mapboxToken?: string
 }
 
 const groupStatusLabel = (participants: Conversation["participants"]) => {
@@ -55,6 +60,10 @@ export const ChatLayout = ({
   conversationMode = "scroll",
   conversationContainerRef,
   conversationContentRef,
+  viewingProfileId,
+  onOpenProfile,
+  onCloseProfile,
+  mapboxToken,
 }: ChatLayoutProps) => {
   const bodyFont = `Roboto, ${layout.fonts.body}`
   const headerFont = `Roboto, ${layout.fonts.header}`
@@ -69,6 +78,9 @@ export const ChatLayout = ({
     ? groupStatusLabel(conversation.participants)
     : directStatusLabel(headerParticipant?.status, layout.id)
   const floating = showChrome ? layout.floatingChrome : undefined
+  const viewingProfile = viewingProfileId
+    ? conversation.participants.find((participant) => participant.id === viewingProfileId)
+    : undefined
 
   return (
     <div
@@ -101,46 +113,63 @@ export const ChatLayout = ({
         } as React.CSSProperties
       }
     >
-      {backgroundImageUrl ? (
-        <img
-          src={backgroundImageUrl}
-          alt=""
-          className="chat-layer h-full w-full object-cover"
-          style={{ opacity: backgroundImageOpacity }}
-          aria-hidden="true"
-        />
-      ) : null}
-      {theme.pattern ? <div className="chat-layer chat-bg-pattern" aria-hidden="true" /> : null}
-      {showChrome ? (
-        <div className={cn("relative z-20 shrink-0", floating && "absolute inset-x-0 top-0")}>
-          <ChatHeader
-            title={title}
-            subtitle={subtitle}
-            avatarUrl={!isGroup ? headerParticipant?.avatarUrl : undefined}
-            avatarFallback={!isGroup ? headerParticipant?.name : title}
-            isVerified={!isGroup ? headerParticipant?.isVerified : undefined}
-            isGroup={isGroup}
-            layout={layout}
-            theme={theme}
-          />
-        </div>
-      ) : null}
-      <div className="relative flex-1 min-h-0">
-        <ConversationView
-          messages={conversation.messages}
-          participants={conversation.participants}
+      {viewingProfile ? (
+        <ProfileScreen
+          participant={viewingProfile}
           layout={layout}
-          selfId={selfId}
-          mode={conversationMode}
-          containerRef={conversationContainerRef}
-          contentRef={conversationContentRef}
+          theme={theme}
+          mapboxToken={mapboxToken}
+          onBack={onCloseProfile}
         />
-      </div>
-      {showChrome ? (
-        <div className={cn("relative z-20 shrink-0", floating && "absolute inset-x-0 bottom-0")}>
-          <MessageInput layout={layout} />
-        </div>
-      ) : null}
+      ) : (
+        <>
+          {backgroundImageUrl ? (
+            <img
+              src={backgroundImageUrl}
+              alt=""
+              className="chat-layer h-full w-full object-cover"
+              style={{ opacity: backgroundImageOpacity }}
+              aria-hidden="true"
+            />
+          ) : null}
+          {theme.pattern ? <div className="chat-layer chat-bg-pattern" aria-hidden="true" /> : null}
+          {showChrome ? (
+            <div className={cn("relative z-20 shrink-0", floating && "absolute inset-x-0 top-0")}>
+              <ChatHeader
+                title={title}
+                subtitle={subtitle}
+                avatarUrl={!isGroup ? headerParticipant?.avatarUrl : undefined}
+                avatarFallback={!isGroup ? headerParticipant?.name : title}
+                isVerified={!isGroup ? headerParticipant?.isVerified : undefined}
+                isGroup={isGroup}
+                layout={layout}
+                theme={theme}
+                onTitleClick={
+                  !isGroup && headerParticipant && onOpenProfile
+                    ? () => onOpenProfile(headerParticipant.id)
+                    : undefined
+                }
+              />
+            </div>
+          ) : null}
+          <div className="relative flex-1 min-h-0">
+            <ConversationView
+              messages={conversation.messages}
+              participants={conversation.participants}
+              layout={layout}
+              selfId={selfId}
+              mode={conversationMode}
+              containerRef={conversationContainerRef}
+              contentRef={conversationContentRef}
+            />
+          </div>
+          {showChrome ? (
+            <div className={cn("relative z-20 shrink-0", floating && "absolute inset-x-0 bottom-0")}>
+              <MessageInput layout={layout} />
+            </div>
+          ) : null}
+        </>
+      )}
     </div>
   )
 }

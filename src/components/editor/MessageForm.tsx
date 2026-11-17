@@ -93,7 +93,13 @@ export const MessageForm = ({ participants, initial, onSubmit, onCancel }: Messa
         autoFocus
         value={content}
         onChange={(event) => setContent(event.target.value)}
-        placeholder={type === "image" ? "Caption (optional)" : "Message text"}
+        placeholder={
+          type === "image"
+            ? "Caption (optional)"
+            : type === "receipt"
+              ? "Receipt label, e.g. “Delivered” or “Opened”"
+              : "Message text"
+        }
         className="min-h-[72px]"
         aria-label={type === "image" ? "Caption" : "Message text"}
       />
@@ -170,6 +176,7 @@ export const MessageForm = ({ participants, initial, onSubmit, onCancel }: Messa
               <SelectItem value="text">Message</SelectItem>
               <SelectItem value="image">Image</SelectItem>
               <SelectItem value="system">System notice</SelectItem>
+              <SelectItem value="receipt">Receipt (Delivered/Opened)</SelectItem>
             </SelectContent>
           </Select>
         </div>

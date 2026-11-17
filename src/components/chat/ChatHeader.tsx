@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from "react"
 import {
   ArrowLeft,
   ChevronLeft,
@@ -24,6 +25,7 @@ interface ChatHeaderProps {
   isGroup?: boolean
   layout: LayoutConfig
   theme: LayoutTheme
+  onTitleClick?: () => void
 }
 
 export const ChatHeader = ({
@@ -35,6 +37,7 @@ export const ChatHeader = ({
   isGroup,
   layout,
   theme,
+  onTitleClick,
 }: ChatHeaderProps) => {
   if (layout.id === "whatsapp") {
     return (
@@ -44,6 +47,7 @@ export const ChatHeader = ({
         avatarUrl={avatarUrl}
         isVerified={isVerified}
         isGroup={isGroup}
+        onTitleClick={onTitleClick}
       />
     )
   }
@@ -125,6 +129,19 @@ export const ChatHeader = ({
   const verifiedBadge = isVerified ? (
     <VerifiedBadge className="h-3.5 w-3.5" />
   ) : null
+  const titleClickProps = onTitleClick
+    ? {
+        role: "button" as const,
+        tabIndex: 0,
+        onClick: onTitleClick,
+        onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault()
+            onTitleClick()
+          }
+        },
+      }
+    : {}
   const avatarNode =
     showHeaderAvatar && avatarUrl ? (
       <AvatarImage
@@ -167,7 +184,13 @@ export const ChatHeader = ({
             <Button size="icon" variant="ghost" className={iconButtonClass}>
               <BackIcon className={iconClass} />
             </Button>
-            <div className="flex flex-col items-center gap-1 justify-self-center">
+            <div
+              className={cn(
+                "flex flex-col items-center gap-1 justify-self-center",
+                onTitleClick && "cursor-pointer rounded-md focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none",
+              )}
+              {...titleClickProps}
+            >
               {avatarNode}
               <div className="flex items-center gap-1 text-[0.85rem] font-semibold">
                 <span>{title}</span>
@@ -193,50 +216,51 @@ export const ChatHeader = ({
         <div
           className={cn(
             "flex items-center",
-            isSnapchat
-                ? "gap-2"
-                : isMessenger
-                ? "gap-2"
-                : isInstagram
-                  ? "gap-2"
-                    : isTinder
-                      ? "gap-3"
-                      : "gap-3",
+            isSnapchat || isMessenger || isInstagram ? "gap-2" : "gap-3",
           )}
         >
           <Button size="icon" variant="ghost" className={iconButtonClass}>
             <BackIcon className={iconClass} />
           </Button>
-            {avatarNode}
-            <div>
-              <div
-                className={cn(
-                  "flex items-center gap-1 font-semibold",
-                  isSnapchat
-                      ? "text-[0.9rem]"
-                      : isMessenger || isInstagram
-                        ? "text-[0.95rem]"
-                        : isTinder
-                          ? "text-[1rem] leading-tight"
-                          : "text-sm",
-                )}
-              >
-                <span>{title}</span>
-                {verifiedBadge}
-                {isInstagram ? <ChevronRight className="h-3.5 w-3.5 opacity-70" /> : null}
-              </div>
-              {layout.showStatus && subtitle ? (
+            <div
+              className={cn(
+                "flex items-center",
+                isSnapchat || isMessenger || isInstagram ? "gap-2" : "gap-3",
+                onTitleClick && "cursor-pointer rounded-md focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none",
+              )}
+              {...titleClickProps}
+            >
+              {avatarNode}
+              <div>
                 <div
                   className={cn(
-                    "opacity-80",
+                    "flex items-center gap-1 font-semibold",
                     isSnapchat
-                        ? "text-[0.65rem]"
-                        : "text-xs",
+                        ? "text-[0.9rem]"
+                        : isMessenger || isInstagram
+                          ? "text-[0.95rem]"
+                          : isTinder
+                            ? "text-[1rem] leading-tight"
+                            : "text-sm",
                   )}
                 >
-                  {subtitle}
+                  <span>{title}</span>
+                  {verifiedBadge}
+                  {isInstagram ? <ChevronRight className="h-3.5 w-3.5 opacity-70" /> : null}
                 </div>
-              ) : null}
+                {layout.showStatus && subtitle ? (
+                  <div
+                    className={cn(
+                      "opacity-80",
+                      isSnapchat
+                          ? "text-[0.65rem]"
+                          : "text-xs",
+                    )}
+                  >
+                    {subtitle}
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
