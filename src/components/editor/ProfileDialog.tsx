@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { AtSign, Loader2, MapPin, X } from "lucide-react"
 import type { Participant } from "@/types/conversation"
-import { useConversationStore } from "@/store/conversationStore"
+import { useConversationStore, useMapboxToken } from "@/store/conversationStore"
 import { toast } from "@/store/toastStore"
 import { AvatarUpload } from "@/components/editor/AvatarUpload"
 import { Button } from "@/components/ui/button"
@@ -19,7 +19,7 @@ interface ProfileDialogProps {
 const sanitizeUsername = (value: string) => value.replace(/^@+/, "").replace(/\s+/g, "")
 
 export const ProfileDialog = ({ participant, onOpenChange, onChange }: ProfileDialogProps) => {
-  const mapboxToken = useConversationStore((state) => state.mapboxToken)
+  const mapboxToken = useMapboxToken()
   const setUi = useConversationStore((state) => state.setUi)
   const [addressInput, setAddressInput] = useState("")
   const [isLocating, setIsLocating] = useState(false)

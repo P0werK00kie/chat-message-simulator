@@ -47,6 +47,24 @@ export const formatInstagramDateSeparator = (timestamp: string) => {
 export const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max)
 
+// Drops a leading house/building number ("1600 Pennsylvania Avenue NW" -> "Pennsylvania Avenue NW").
+const stripStreetNumber = (street: string) => street.replace(/^\d+[a-zA-Z]?(?:-\d+[a-zA-Z]?)?\s+/, "")
+
+// Vagues a full street address down to "Near <street>, <city state>" for the profile screen,
+// so an exported mockup doesn't leak someone's exact address.
+export const formatNearAddress = (address: string) => {
+  const parts = address
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+  if (parts.length === 0) return ""
+  if (parts.length === 1) return `Near ${stripStreetNumber(parts[0])}`
+  const [street, city, stateZip] = parts
+  const state = stateZip?.replace(/\d[\d-]*$/, "").trim()
+  const cityState = [city, state].filter(Boolean).join(" ")
+  return `Near ${[stripStreetNumber(street), cityState].filter(Boolean).join(", ")}`
+}
+
 export const getConversationTitle = (conversation: Conversation) => {
   const names = conversation.participants.map((participant) => participant.name).filter(Boolean)
   if (conversation.participants.length > 2) {

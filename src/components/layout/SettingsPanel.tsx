@@ -1,7 +1,8 @@
-import { useRef, type ReactNode } from "react"
+import { useRef, useState, type ReactNode } from "react"
 import { ImagePlus, Moon, Sun, X } from "lucide-react"
 import { getLayoutConfig } from "@/constants/layouts"
-import { useConversationStore } from "@/store/conversationStore"
+import { buildGradientCss, gradientPresets } from "@/constants/gradients"
+import { envMapboxToken, useConversationStore } from "@/store/conversationStore"
 import { toast } from "@/store/toastStore"
 import { useFileDrop } from "@/hooks/useFileDrop"
 import { LayoutPicker } from "@/components/layout/LayoutSelector"
@@ -42,15 +43,28 @@ export const SettingsPanel = () => {
   const clearBackgroundImage = useConversationStore((state) => state.clearBackgroundImage)
   const backgroundColor = useConversationStore((state) => state.backgroundColor)
   const setBackgroundColor = useConversationStore((state) => state.setBackgroundColor)
+  const backgroundGradient = useConversationStore((state) => state.backgroundGradient)
+  const setBackgroundGradient = useConversationStore((state) => state.setBackgroundGradient)
+  const customGradient = useConversationStore((state) => state.customGradient)
+  const setCustomGradient = useConversationStore((state) => state.setCustomGradient)
+  const clearBackgroundFill = useConversationStore((state) => state.clearBackgroundFill)
   const mapboxToken = useConversationStore((state) => state.mapboxToken)
   const setMapboxToken = useConversationStore((state) => state.setMapboxToken)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [fillMode, setFillMode] = useState<"solid" | "gradient">(backgroundGradient ? "gradient" : "solid")
+  const [prevFill, setPrevFill] = useState({ backgroundColor, backgroundGradient })
+  if (prevFill.backgroundColor !== backgroundColor || prevFill.backgroundGradient !== backgroundGradient) {
+    setPrevFill({ backgroundColor, backgroundGradient })
+    if (backgroundGradient) setFillMode("gradient")
+    else if (backgroundColor) setFillMode("solid")
+  }
 
   const layout = getLayoutConfig(layoutId)
   const hasDark = layout.themes.some((theme) => theme.id === "dark")
   const themeBackground =
     (layout.themes.find((theme) => theme.id === themeId) ?? layout.themes[0]).colors.background
   const opacityPercent = Math.round(backgroundImageOpacity * 100)
+  const customGradientCss = buildGradientCss(customGradient)
 
   const uploadBackground = async (file: File) => {
     try {
@@ -122,7 +136,7 @@ export const SettingsPanel = () => {
         </label>
       </Section>
 
-      <Section title="Wallpaper" hint="Drop an image below, or pick a solid color.">
+      <Section title="Wallpaper" hint="Drop an image below, or pick a solid color or gradient.">
         <div
           className={cn(
             "flex items-center gap-3 rounded-lg border border-dashed border-neutral-300 p-2.5 transition",
@@ -134,7 +148,7 @@ export const SettingsPanel = () => {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="relative flex h-20 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-400 transition hover:border-neutral-300 focus-visible:ring-2 focus-visible:ring-black/50 focus-visible:outline-none"
-            style={{ backgroundColor: backgroundColor || themeBackground }}
+            style={{ background: backgroundGradient || backgroundColor || themeBackground }}
             aria-label="Upload wallpaper image"
           >
             {backgroundImageUrl ? (
@@ -188,35 +202,132 @@ export const SettingsPanel = () => {
             }}
           />
         </div>
-        <div className="flex items-center gap-2">
-          <label
-            className="relative h-9 w-9 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-neutral-200"
-            style={{ backgroundColor: backgroundColor || themeBackground }}
-          >
-            <input
-              type="color"
-              value={backgroundColor || themeBackground}
+        <Segmented
+          label="Wallpaper fill type"
+          size="sm"
+          value={fillMode}
+          onChange={setFillMode}
+          options={[
+            { value: "solid", label: "Solid" },
+            { value: "gradient", label: "Gradient" },
+          ]}
+        />
+
+        {fillMode === "solid" ? (
+          <div className="flex items-center gap-2">
+            <label
+              className="relative h-9 w-9 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-neutral-200"
+              style={{ backgroundColor: backgroundColor || themeBackground }}
+            >
+              <input
+                type="color"
+                value={backgroundColor || themeBackground}
+                onChange={(event) => setBackgroundColor(event.target.value)}
+                className="absolute inset-0 cursor-pointer opacity-0"
+                aria-label="Wallpaper color"
+              />
+            </label>
+            <Input
+              value={backgroundColor}
               onChange={(event) => setBackgroundColor(event.target.value)}
-              className="absolute inset-0 cursor-pointer opacity-0"
-              aria-label="Wallpaper color"
+              placeholder={`${themeBackground} (app default)`}
+              className="h-9 font-mono text-xs"
+              aria-label="Wallpaper color hex"
             />
-          </label>
-          <Input
-            value={backgroundColor}
-            onChange={(event) => setBackgroundColor(event.target.value)}
-            placeholder={`${themeBackground} (app default)`}
-            className="h-9 font-mono text-xs"
-            aria-label="Wallpaper color hex"
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setBackgroundColor("")}
-            disabled={!backgroundColor}
-          >
-            Reset
-          </Button>
-        </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setBackgroundColor("")}
+              disabled={!backgroundColor}
+            >
+              Reset
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="grid grid-cols-4 gap-2">
+              {gradientPresets.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => setBackgroundGradient(preset.css)}
+                  className={cn(
+                    "h-10 rounded-lg border-2 transition focus-visible:ring-2 focus-visible:ring-black/50 focus-visible:outline-none",
+                    backgroundGradient === preset.css
+                      ? "border-black"
+                      : "border-transparent hover:border-neutral-300",
+                  )}
+                  style={{ backgroundImage: preset.css }}
+                  title={preset.name}
+                  aria-label={preset.name}
+                  aria-pressed={backgroundGradient === preset.css}
+                />
+              ))}
+            </div>
+
+            <div className="space-y-2 rounded-lg border border-neutral-200 p-2.5">
+              <div className="flex items-center justify-between text-xs text-neutral-500">
+                <span>Custom gradient</span>
+                <span className="tabular-nums">{customGradient.angle}°</span>
+              </div>
+              <div
+                className="h-10 w-full rounded-lg border border-neutral-200"
+                style={{ backgroundImage: customGradientCss }}
+              />
+              <div className="flex items-center gap-2">
+                <label
+                  className="relative h-8 w-8 shrink-0 cursor-pointer overflow-hidden rounded-md border border-neutral-200"
+                  style={{ backgroundColor: customGradient.from }}
+                >
+                  <input
+                    type="color"
+                    value={customGradient.from}
+                    onChange={(event) => setCustomGradient({ from: event.target.value })}
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                    aria-label="Gradient start color"
+                  />
+                </label>
+                <Input
+                  value={customGradient.from}
+                  onChange={(event) => setCustomGradient({ from: event.target.value })}
+                  className="h-8 font-mono text-xs"
+                  aria-label="Gradient start color hex"
+                />
+                <span className="text-xs text-neutral-400">to</span>
+                <label
+                  className="relative h-8 w-8 shrink-0 cursor-pointer overflow-hidden rounded-md border border-neutral-200"
+                  style={{ backgroundColor: customGradient.to }}
+                >
+                  <input
+                    type="color"
+                    value={customGradient.to}
+                    onChange={(event) => setCustomGradient({ to: event.target.value })}
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                    aria-label="Gradient end color"
+                  />
+                </label>
+                <Input
+                  value={customGradient.to}
+                  onChange={(event) => setCustomGradient({ to: event.target.value })}
+                  className="h-8 font-mono text-xs"
+                  aria-label="Gradient end color hex"
+                />
+              </div>
+              <Slider
+                min={0}
+                max={360}
+                step={1}
+                value={[customGradient.angle]}
+                onValueChange={(value) => setCustomGradient({ angle: value[0] })}
+                aria-label="Gradient angle"
+              />
+            </div>
+
+            <Button variant="ghost" size="sm" onClick={clearBackgroundFill} disabled={!backgroundGradient}>
+              Reset
+            </Button>
+          </div>
+        )}
       </Section>
 
       <Section
@@ -226,12 +337,17 @@ export const SettingsPanel = () => {
         <Input
           value={mapboxToken}
           onChange={(event) => setMapboxToken(event.target.value.trim())}
-          placeholder="pk.eyJ1Ijoi… (your Mapbox access token)"
+          placeholder={
+            envMapboxToken
+              ? "Using the token from VITE_MAPBOX_TOKEN"
+              : "pk.eyJ1Ijoi… (your Mapbox access token)"
+          }
           className="font-mono text-xs"
           aria-label="Mapbox access token"
         />
         <p className="text-[11px] text-neutral-400">
           Stored only in this browser, never included in exported images or conversation files.
+          {envMapboxToken ? " Leave blank to use the token configured in .env." : ""}
         </p>
       </Section>
     </div>

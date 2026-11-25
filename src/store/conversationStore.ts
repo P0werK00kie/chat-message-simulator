@@ -6,6 +6,7 @@ import type { Message, MessageStatus, MessageType } from "../types/message"
 import type { LayoutId, ThemeId } from "../types/layout"
 import { generateId } from "../utils/helpers"
 import { toast } from "./toastStore"
+import { buildGradientCss, defaultCustomGradient, type CustomGradient } from "../constants/gradients"
 
 export type ExportFormat = "png" | "jpeg"
 export type ExportCaptureMode = "viewport" | "full" | "screens"
@@ -40,6 +41,8 @@ type Snapshot = {
   backgroundImageUrl: string
   backgroundImageOpacity: number
   backgroundColor: string
+  backgroundGradient: string
+  customGradient: CustomGradient
   exportSettings: ExportSettings
   mapboxToken: string
 }
@@ -59,6 +62,8 @@ interface ConversationStore {
   backgroundImageUrl: string
   backgroundImageOpacity: number
   backgroundColor: string
+  backgroundGradient: string
+  customGradient: CustomGradient
   exportSettings: ExportSettings
   mapboxToken: string
   ui: UiState
@@ -72,6 +77,9 @@ interface ConversationStore {
   setBackgroundImageOpacity: (opacity: number) => void
   clearBackgroundImage: () => void
   setBackgroundColor: (color: string) => void
+  setBackgroundGradient: (css: string) => void
+  setCustomGradient: (updates: Partial<CustomGradient>) => void
+  clearBackgroundFill: () => void
   addParticipant: (participant: Omit<Participant, "id">) => void
   updateParticipant: (participantId: string, updates: Partial<Participant>) => void
   removeParticipant: (participantId: string) => void
@@ -283,6 +291,8 @@ const buildSnapshot = (state: ConversationStore): Snapshot => ({
   backgroundImageUrl: state.backgroundImageUrl,
   backgroundImageOpacity: state.backgroundImageOpacity,
   backgroundColor: state.backgroundColor,
+  backgroundGradient: state.backgroundGradient,
+  customGradient: state.customGradient,
   exportSettings: state.exportSettings,
   mapboxToken: state.mapboxToken,
 })
@@ -353,6 +363,8 @@ export const useConversationStore = create<ConversationStore>()(
       backgroundImageUrl: "",
       backgroundImageOpacity: 0.35,
       backgroundColor: "",
+      backgroundGradient: "",
+      customGradient: defaultCustomGradient,
       exportSettings: defaultExportSettings,
       mapboxToken: "",
       ui: defaultUiState,
@@ -383,7 +395,30 @@ export const useConversationStore = create<ConversationStore>()(
       setBackgroundColor: (color) =>
         set((state) => ({
           backgroundColor: color,
+          backgroundGradient: "",
           history: pushHistory(state, "background-color"),
+        })),
+      setBackgroundGradient: (css) =>
+        set((state) => ({
+          backgroundGradient: css,
+          backgroundColor: "",
+          history: pushHistory(state, "background-gradient"),
+        })),
+      setCustomGradient: (updates) =>
+        set((state) => {
+          const customGradient = { ...state.customGradient, ...updates }
+          return {
+            customGradient,
+            backgroundGradient: buildGradientCss(customGradient),
+            backgroundColor: "",
+            history: pushHistory(state, "background-gradient-custom"),
+          }
+        }),
+      clearBackgroundFill: () =>
+        set((state) => ({
+          backgroundColor: "",
+          backgroundGradient: "",
+          history: pushHistory(state),
         })),
       addParticipant: (participant) =>
         set((state) => {
@@ -500,6 +535,8 @@ export const useConversationStore = create<ConversationStore>()(
           backgroundImageUrl: "",
           backgroundImageOpacity: 0.35,
           backgroundColor: "",
+          backgroundGradient: "",
+          customGradient: defaultCustomGradient,
           exportSettings: { ...defaultExportSettings },
           ui: { ...defaultUiState, activeView: state.ui.activeView },
           history: pushHistory(state),
@@ -574,9 +611,17 @@ export const useConversationStore = create<ConversationStore>()(
         backgroundImageUrl: state.backgroundImageUrl,
         backgroundImageOpacity: state.backgroundImageOpacity,
         backgroundColor: state.backgroundColor,
+        backgroundGradient: state.backgroundGradient,
+        customGradient: state.customGradient,
         exportSettings: state.exportSettings,
         mapboxToken: state.mapboxToken,
       }),
     },
   ),
 )
+
+// Falls back to a build-time default when the user hasn't set their own token in Settings.
+export const envMapboxToken = (import.meta.env.VITE_MAPBOX_TOKEN as string | undefined) ?? ""
+
+export const useMapboxToken = () =>
+  useConversationStore((state) => state.mapboxToken || envMapboxToken)

@@ -16,6 +16,7 @@ interface ChatLayoutProps {
   backgroundImageUrl: string
   backgroundImageOpacity: number
   backgroundColor: string
+  backgroundGradient: string
   conversationMode?: "scroll" | "expanded"
   conversationContainerRef?: React.Ref<HTMLDivElement>
   conversationContentRef?: React.Ref<HTMLDivElement>
@@ -57,6 +58,7 @@ export const ChatLayout = ({
   backgroundImageUrl,
   backgroundImageOpacity,
   backgroundColor,
+  backgroundGradient,
   conversationMode = "scroll",
   conversationContainerRef,
   conversationContentRef,
@@ -81,6 +83,7 @@ export const ChatLayout = ({
   const viewingProfile = viewingProfileId
     ? conversation.participants.find((participant) => participant.id === viewingProfileId)
     : undefined
+  const customFill = backgroundGradient || backgroundColor
 
   return (
     <div
@@ -91,7 +94,7 @@ export const ChatLayout = ({
         {
           "--chat-inset-top": `${floating?.top ?? 0}px`,
           "--chat-inset-bottom": `${floating?.bottom ?? 0}px`,
-          "--chat-bg": backgroundColor || theme.colors.background,
+          "--chat-bg": customFill || theme.colors.background,
           "--chat-surface": theme.colors.surface,
           "--chat-header": theme.colors.header,
           "--chat-header-text": theme.colors.headerText,
@@ -118,6 +121,7 @@ export const ChatLayout = ({
           participant={viewingProfile}
           layout={layout}
           theme={theme}
+          background={customFill}
           mapboxToken={mapboxToken}
           onBack={onCloseProfile}
         />

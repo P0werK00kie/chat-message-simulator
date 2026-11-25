@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 import type { ChatPreview } from "@/hooks/useChatPreview"
 import { getLayoutConfig } from "@/constants/layouts"
-import { useConversationStore } from "@/store/conversationStore"
+import { useConversationStore, useMapboxToken } from "@/store/conversationStore"
 import type { ExportCaptureMode } from "@/store/conversationStore"
 import { ChatLayout } from "@/components/layout/ChatLayout"
 import { LayoutSelector } from "@/components/layout/LayoutSelector"
@@ -40,7 +40,8 @@ export const PreviewPane = ({ preview, className }: PreviewPaneProps) => {
   const backgroundImageUrl = useConversationStore((state) => state.backgroundImageUrl)
   const backgroundImageOpacity = useConversationStore((state) => state.backgroundImageOpacity)
   const backgroundColor = useConversationStore((state) => state.backgroundColor)
-  const mapboxToken = useConversationStore((state) => state.mapboxToken)
+  const backgroundGradient = useConversationStore((state) => state.backgroundGradient)
+  const mapboxToken = useMapboxToken()
   const ui = useConversationStore((state) => state.ui)
   const setUi = useConversationStore((state) => state.setUi)
   const setTheme = useConversationStore((state) => state.setTheme)
@@ -69,6 +70,7 @@ export const PreviewPane = ({ preview, className }: PreviewPaneProps) => {
     backgroundImageUrl,
     backgroundImageOpacity,
     backgroundColor,
+    backgroundGradient,
     viewingProfileId: ui.viewingProfileId,
     onOpenProfile: (participantId: string) => setUi({ viewingProfileId: participantId }),
     onCloseProfile: () => setUi({ viewingProfileId: null }),
