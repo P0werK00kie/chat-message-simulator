@@ -37,7 +37,7 @@ export const MessageInput = ({ placeholder = "Message", layout }: MessageInputPr
         : isInstagram
           ? "Message..."
           : isTinder
-            ? "Say something nice"
+            ? "Say something"
             : placeholder
 
   return (

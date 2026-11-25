@@ -3,6 +3,7 @@ import type { Participant } from "@/types/conversation"
 import type { LayoutConfig } from "@/types/layout"
 import { MessageBubble } from "@/components/chat/MessageBubble"
 import { SnapchatReceipt } from "@/components/chat/SnapchatReceipt"
+import { TinderReceipt } from "@/components/chat/TinderReceipt"
 import { formatChatDay, formatDateSeparator, formatInstagramDateSeparator } from "@/utils/helpers"
 import { cn } from "@/utils/cn"
 
@@ -137,6 +138,8 @@ export const ConversationView = ({
                 {showDate ? <div className={dateBadgeClass}>{currentDate}</div> : null}
                 {isSnapchat ? (
                   <SnapchatReceipt message={message} isOwn={isOwn} />
+                ) : isTinder ? (
+                  <TinderReceipt message={message} isOwn={isOwn} />
                 ) : (
                   <div className={cn("flex w-full px-1", isOwn ? "justify-end" : "justify-start")}>
                     <span className="text-[11px] text-[var(--chat-muted)] italic">
