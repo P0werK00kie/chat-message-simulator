@@ -67,7 +67,7 @@ export const ProfileScreen = ({
         >
           <BackIcon className="h-5 w-5" />
         </button>
-        <span className="text-sm font-semibold">Contact info</span>
+        <span className="text-sm font-semibold">Back to Chat</span>
       </div>
 
       <div className="flex flex-1 flex-col items-center gap-1.5 overflow-y-auto px-6 py-6 text-center">
