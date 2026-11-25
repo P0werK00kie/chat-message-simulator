@@ -73,6 +73,22 @@ Built with modern web technologies for performance and developer experience:
 
 Before pushing, run `yarn lint` and `yarn build` (CI runs both).
 
+### 🗺️ Mapbox Integration (optional)
+
+Adding a participant's location on their profile screen (geocoding an address and showing a small static map) requires a Mapbox access token. Get a free one at [account.mapbox.com/access-tokens](https://account.mapbox.com/access-tokens/).
+
+You can provide the token in either of two ways:
+
+1. **In the app** — open **Settings → Style → Map** and paste the token there. It's stored only in your browser (never included in exported images or conversation JSON files) and takes precedence over the environment variable below.
+2. **As a build-time fallback** — copy `.env.example` to `.env` and set `VITE_MAPBOX_TOKEN`:
+   ```bash
+   cp .env.example .env
+   # then edit .env and set VITE_MAPBOX_TOKEN=pk.eyJ1Ijoi...
+   ```
+   This is useful if you're self-hosting a build and want a token pre-configured for everyone, without each person having to paste their own.
+
+Without a token, profile locations simply show a prompt to add one — no other functionality is affected.
+
 ## 🚢 Deployment
 
 Every push to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml): it lints, builds, and publishes `dist/` to the `master` branch of [quead/quead.github.io](https://github.com/quead/quead.github.io), which GitHub Pages serves at https://quead.github.io/. Pull requests run the same lint and build without deploying, and the workflow can also be started by hand from the Actions tab.
